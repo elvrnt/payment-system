@@ -1,0 +1,46 @@
+services:
+  api-server:
+    build: ./api
+    container_name: api-server
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - payment-gateway
+
+  payment-gateway:
+    build: ./payment-gateway
+    container_name: payment-gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - encryption-service
+
+  encryption-service:
+    build: ./encryption-service
+    container_name: encryption-service
+    ports:
+      - "5000:5000"
+
+  db:
+    build: ./db
+    container_name: db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=payment_system
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  logging-service:
+    build: ./logging-service
+    container_name: logging-service
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+
+volumes:
+  db_data:
