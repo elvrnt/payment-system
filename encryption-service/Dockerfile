@@ -1,5 +1,11 @@
-FROM alpine:latest
+FROM python:3.9-slim
 
-RUN apk add --no-cache curl
+WORKDIR /app
 
-CMD ["sh", "-c", "while true; do echo 'Encryption service is running'; sleep 10; done"]
+COPY app.py .
+
+RUN pip install flask
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]

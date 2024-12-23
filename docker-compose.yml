@@ -1,46 +1,68 @@
 services:
-  api-server:
-    build: ./api
-    container_name: api-server
+  api:
+    build:
+      context: ./api
     ports:
-      - "3000:3000"
+      - "8000:8000"
     depends_on:
       - db
       - payment-gateway
+      - encryption-service
+      - logging-service
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=orders_db
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+
+      - PAYMENT_GATEWAY_URL=http://payment-gateway:4000
+      - ENCRYPTION_SERVICE_URL=http://encryption-service:5000
+      - LOGGING_SERVICE_URL=http://logging-service:5044
+    networks:
+      - app_network
 
   payment-gateway:
-    build: ./payment-gateway
-    container_name: payment-gateway
+    build:
+      context: ./payment-gateway
     ports:
       - "4000:4000"
-    depends_on:
-      - encryption-service
+    environment:
+      - ENCRYPTION_SERVICE_URL=http://encryption-service:5000
+    networks:
+      - app_network
 
   encryption-service:
-    build: ./encryption-service
-    container_name: encryption-service
+    build:
+      context: ./encryption-service
     ports:
       - "5000:5000"
+    networks:
+      - app_network
 
   db:
-    build: ./db
-    container_name: db
+    build:
+      context: ./db
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=admin
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=payment_system
+      - POSTGRES_DB=orders_db
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
 
   logging-service:
-    build: ./logging-service
-    container_name: logging-service
+    build:
+      context: ./logging-service
     ports:
-      - "5601:5601"
-      - "9200:9200"
       - "5044:5044"
-
+    networks:
+      - app_network
 volumes:
-  db_data:
+  postgres_data:
+networks:
+  app_network:
+    driver: bridge
